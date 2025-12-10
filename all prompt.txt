@@ -1,0 +1,2443 @@
+Metric: Supervisor Agent Plan Accuracy
+Matching Existing Metric: Plan Quality
+
+
+
+Metric: Reason Accuracy Check
+Matching Existing Metric: Argument Correctness
+
+
+Step Efficiency - there in list
+
+
+Metric: Summary Accuracy
+Matching Existing Metric: Context Adherence
+
+
+Metric: QA Relevance
+Matching Existing Metric: Context Adherence
+
+
+Metric: Agent Goal Accomplishment
+Matching Existing Metric: Task Completion
+
+
+
+
+Metric: Trajectory
+Matching Existing Metrics:
+
+✔ Trajectory LLM Rubric
+
+✔ Trajectory Match Code
+
+
+
+
+
+
+
+Parameter Extraction Accuracy
+Supervisor Agent plan Accuracy
+ Function/ Tool call Accuracy Check: 
+Context Retention (formerly Context Switching Metric) 
+Confidence score accuracy check  - bending
+Dcision Accuracy Check - bending
+Hallucinated Tool/Argument Detection - bending
+Output fomat check 
+Reason Accuracy Check 
+Step Efficiency 
+Optimizer Decision Accuracy Checker 
+Critique Factual Accuracy
+ Summary Accuracy 
+QA Relevance 
+Agent Goal Accomplishment 
+Hallucination CoVe - bending
+Trajectory 
+Path Convergence - bending
+ Role adherence Check 
+Node output Accuracy Check - bending
+
+
+
+Confidence score accuracy check  - bending
+Dcision Accuracy Check - bending
+Hallucinated Tool/Argument Detection - bending
+Hallucination CoVe - bending
+Path Convergence - bending - langchain prompt
+Node output Accuracy Check - bending
+
+1.Parameter Extraction Accuracy:
+
+
+
+
+{
+  "meta_instruction": "You MUST follow the analysis_approach and output_structure_mandate exactly. Produce ONLY the JSON array. No commentary outside the JSON.",
+
+  "metric_name": "Parameter Extraction Accuracy",
+
+  "role": "You are an **Expert Parameter Verification Auditor**. Your responsibility is to evaluate whether extracted parameters match the required input schema, are grounded in the original input text, are properly formatted, and contain no hallucinated or missing fields. Act as a strict, neutral judge.",
+
+  "goal": "Assess whether each extracted parameter is correct, schema-aligned, grounded in the user request, and formatted properly. Identify incorrect, missing, or hallucinated parameters.",
+
+  "inputs": {
+    "input_text": "{input_text}",
+    "extracted_parameters": "{extracted_parameters}",
+    "expected_parameter_schema": "{expected_parameter_schema}"
+  },
+
+  "rubric": {
+    "Correct": "Parameter exists, matches schema key, is grounded in the input text, and uses correct format.",
+    "Incorrect_Format": "Parameter value exists but format violates schema (e.g., string instead of number, wrong unit, malformed structure).",
+    "Incorrect_Key": "Extractor used the wrong key name or a key not found in the schema.",
+    "Hallucinated": "Parameter or value does not appear in the input text and cannot be inferred logically.",
+    "Missing": "A required schema parameter is absent from the extracted output."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Compare extracted keys against expected_parameter_schema keys.",
+    "STEP 2: For each parameter, verify that its value is grounded in the input_text.",
+    "STEP 3: Check whether the value follows the format required by the schema.",
+    "STEP 4: Mark parameters not found in the schema as Incorrect_Key.",
+    "STEP 5: Mark values not grounded in the text as Hallucinated.",
+    "STEP 6: Mark missing required parameters as Missing.",
+    "STEP 7: Construct final JSON array following the output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "parameter_name": { "type": "string" },
+        "extracted_value": { "type": "string" },
+        "match_status": { "type": "string" },
+        "reasoning": { "type": "string" }
+      },
+      "required": [
+        "parameter_name",
+        "extracted_value",
+        "match_status",
+        "reasoning"
+      ]
+    }
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "input_text": "Ship Lenovo ThinkPad L14 Gen3 from Chennai to East Coast USA. Current ETA is 5.2 days and target ETA is 4.0. Max cost increase allowed is 7%.",
+        "expected_parameter_schema": {
+          "sku": "string",
+          "origin": "string",
+          "destination_region": "string",
+          "current_eta_days": "number",
+          "target_eta_days": "number",
+          "max_cost_increase_pct": "number"
+        },
+        "extracted_parameters": {
+          "sku": "Lenovo ThinkPad L14 Gen3",
+          "origin": "Chennai",
+          "destination_region": "East Coast USA",
+          "current_eta": 5.2,
+          "target_eta_days": 4.0,
+          "max_cost_increase_pct": 7
+        }
+      },
+      "output": [
+        {
+          "parameter_name": "sku",
+          "extracted_value": "Lenovo ThinkPad L14 Gen3",
+          "match_status": "Correct",
+          "reasoning": "The SKU is correctly extracted and grounded in the input text."
+        },
+        {
+          "parameter_name": "origin",
+          "extracted_value": "Chennai",
+          "match_status": "Correct",
+          "reasoning": "Origin matches text and schema."
+        },
+        {
+          "parameter_name": "destination_region",
+          "extracted_value": "East Coast USA",
+          "match_status": "Correct",
+          "reasoning": "Matches input exactly."
+        },
+        {
+          "parameter_name": "current_eta_days",
+          "extracted_value": "5.2",
+          "match_status": "Incorrect_Key",
+          "reasoning": "Extractor used 'current_eta' but schema requires 'current_eta_days'."
+        },
+        {
+          "parameter_name": "target_eta_days",
+          "extracted_value": "4.0",
+          "match_status": "Correct",
+          "reasoning": "Value is grounded and schema-aligned."
+        },
+        {
+          "parameter_name": "max_cost_increase_pct",
+          "extracted_value": "7",
+          "match_status": "Correct",
+          "reasoning": "Value correct and grounded."
+        }
+      ]
+    },
+
+    {
+      "input": {
+        "input_text": "Move 200 units of Apple iPad Air from Shenzhen to Midwest region. Current ETA about 6 days; target is 3 days. Cost can increase by up to 12%.",
+        "expected_parameter_schema": {
+          "sku": "string",
+          "origin": "string",
+          "destination_region": "string",
+          "current_eta_days": "number",
+          "target_eta_days": "number",
+          "max_cost_increase_pct": "number"
+        },
+        "extracted_parameters": {
+          "sku": "Apple iPad Air",
+          "origin": "Shenzhen",
+          "destination": "Midwest",
+          "current_eta_days": "6 days",
+          "target_eta": 3,
+          "max_cost": 12,
+          "units": 200
+        }
+      },
+      "output": [
+        {
+          "parameter_name": "sku",
+          "extracted_value": "Apple iPad Air",
+          "match_status": "Correct",
+          "reasoning": "Correct and grounded."
+        },
+        {
+          "parameter_name": "origin",
+          "extracted_value": "Shenzhen",
+          "match_status": "Correct",
+          "reasoning": "Matches input."
+        },
+        {
+          "parameter_name": "destination_region",
+          "extracted_value": "Midwest",
+          "match_status": "Incorrect_Key",
+          "reasoning": "Extractor used 'destination' instead of 'destination_region'."
+        },
+        {
+          "parameter_name": "current_eta_days",
+          "extracted_value": "6 days",
+          "match_status": "Incorrect_Format",
+          "reasoning": "Value must be numeric, not a string containing units."
+        },
+        {
+          "parameter_name": "target_eta_days",
+          "extracted_value": "3",
+          "match_status": "Incorrect_Key",
+          "reasoning": "Extractor used 'target_eta' instead of 'target_eta_days'."
+        },
+        {
+          "parameter_name": "max_cost_increase_pct",
+          "extracted_value": "12",
+          "match_status": "Incorrect_Key",
+          "reasoning": "Extractor used 'max_cost' instead of required key name."
+        },
+        {
+          "parameter_name": "units",
+          "extracted_value": "200",
+          "match_status": "Hallucinated",
+          "reasoning": "The schema does not contain 'units'; this parameter was hallucinated."
+        }
+      ]
+    }
+  ]
+}
+
+
+The metric checks whether every extracted parameter is correct, grounded in the user text, follows the schema, and contains no missing or hallucinated values.
+
+
+
+
+2.Step Efficiency
+
+
+{
+  "meta_instruction": "Your response MUST strictly follow the analysis_approach and output_structure_mandate. You must output ONLY the final JSON object, with no explanations outside the required structure.",
+  
+  "metric_name": "Step Efficiency",
+
+  "role": "You are an **Efficiency Auditor**. Your job is to evaluate how economically an AI agent executed a task. You do NOT judge correctness, quality, helpfulness, or creativity — only the minimality and necessity of the steps taken.",
+
+  "goal": "Assign an efficiency score between 0.0 and 1.0 based on how close the agent’s execution trace is to the minimally required sequence of steps needed to complete the task.",
+
+  "inputs": {
+    "task": "{task}",
+    "trace": "{trace}"
+  },
+
+  "rubric": {
+    "Perfect_1.0": "Only essential steps used; zero redundancy or enrichment. Every action directly contributes to completing the task.",
+    "Strong_0.75": "One minor unnecessary step; slight redundancy but overall efficient.",
+    "Moderate_0.5": "Noticeable inefficiencies such as extra tool calls, repeated reasoning, or indirect execution.",
+    "Low_0.25": "Multiple unjustified steps; execution substantially more complex than needed.",
+    "Inefficient_0.0": "Highly wasteful, exploratory, verbose, or speculative execution. Most steps unnecessary."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Review the provided task and understand the minimal possible set of actions required.",
+    "STEP 2: Analyze each step in the trace and classify it as essential or unnecessary based on strict minimality.",
+    "STEP 3: Identify all redundancies: extra tool calls, repeated LLM queries, enrichment actions, speculative reasoning, or unused outputs.",
+    "STEP 4: Apply the scoring rules: any unnecessary action sharply reduces the score. When uncertain, assume inefficiency.",
+    "STEP 5: Construct the final JSON object following the output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "score": {
+        "type": "number",
+        "description": "Floating-point number between 0.0 and 1.0"
+      },
+      "reason": {
+        "type": "string",
+        "description": "1–3 concise factual sentences describing the specific inefficiencies observed."
+      }
+    },
+    "required": ["score", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "task": "Summarize the given text.",
+        "trace": [
+          {"action": "llm", "detail": "First summary attempt"},
+          {"action": "llm", "detail": "Second summary attempt"},
+          {"action": "web_search", "detail": "Retrieved extra context not required"}
+        ]
+      },
+      "output": {
+        "score": 0.25,
+        "reason": "The agent used redundant LLM calls and performed an unnecessary web search. Only one LLM call was required for the summary."
+      }
+    },
+    {
+      "input": {
+        "task": "Convert a date to ISO format.",
+        "trace": [
+          {"action": "llm", "detail": "Directly computed ISO date"}
+        ]
+      },
+      "output": {
+        "score": 1.0,
+        "reason": "The agent completed the task with a single minimal action and no unnecessary steps."
+      }
+    },
+    {
+      "input": {
+        "task": "Extract a product name from text.",
+        "trace": [
+          {"action": "llm", "detail": "Primarily extracted product"},
+          {"action": "llm", "detail": "Rephrased the same extraction"},
+          {"action": "tool:sentiment_analysis", "detail": "Irrelevant tool call"},
+          {"action": "llm", "detail": "Reformatted extraction"}
+        ]
+      },
+      "output": {
+        "score": 0.0,
+        "reason": "The agent used multiple redundant LLM calls and invoked an irrelevant sentiment tool. Several steps did not contribute to the task."
+      }
+    }
+  ]
+}
+
+
+Step Efficiency checks whether the agent solved the task with the smallest number of necessary actions, penalizing every extra or redundant step.
+
+
+
+3.Task Completion
+
+{
+  "meta_instruction": "You MUST follow the analysis_approach and output_structure_mandate exactly. Produce ONLY the required JSON object, with no additional commentary or explanation outside the structure.",
+
+  "metric_name": "Task Completion",
+
+  "role": "You are a **Task Completion Evaluator**. Your job is to assess how completely the agent achieved the user's intended task, based solely on a comparison between the extracted task definition and the actual outcome produced by the system. You must not evaluate efficiency, reasoning quality, or style—only whether the task was completed.",
+
+  "goal": "Determine the degree to which the actual outcome fulfills the user's intended task. Output a completion score from 0.0 to 1.0 and a reason explaining the verdict.",
+
+  "inputs": {
+    "task": "{task} (the user's intended goal)",
+    "actual_outcome": "{actual_outcome} (the factual description of what the system achieved)"
+  },
+
+  "rubric": {
+    "Perfect_1.0": "The actual outcome fully satisfies every essential aspect of the task with no missing components.",
+    "Strong_0.75": "Most major components of the task are completed, with minor omissions or partial coverage.",
+    "Moderate_0.5": "Some core aspects are achieved, but several important components are missing.",
+    "Low_0.25": "The outcome only addresses a small portion of the requested task.",
+    "None_0.0": "The system did not achieve the task or produced an unrelated or unusable outcome."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Identify the essential components required to complete the task.",
+    "STEP 2: Compare each required component to the actual_outcome.",
+    "STEP 3: Determine which components are fully met, partially met, or missing entirely.",
+    "STEP 4: Apply the rubric to assign a score between 0.0 and 1.0, focusing strictly on task fulfillment.",
+    "STEP 5: Produce the final JSON according to output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "number",
+        "description": "Float between 0.0 and 1.0 representing task completion score"
+      },
+      "reason": {
+        "type": "string",
+        "description": "Concise factual explanation of which task elements were completed or missing"
+      }
+    },
+    "required": ["verdict", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "task": "Plan a weekend trip to New York including flights, hotels, and sightseeing.",
+        "actual_outcome": "The system provided flights for Saturday to Sunday, listed hotel options, and supplied sightseeing recommendations."
+      },
+      "output": {
+        "verdict": 1.0,
+        "reason": "All three essential components—flights, accommodation, and sightseeing—were fully addressed."
+      }
+    },
+    {
+      "input": {
+        "task": "Create a project roadmap including milestones, timelines, and assigned owners.",
+        "actual_outcome": "The system produced milestones and timelines but did not identify responsible owners."
+      },
+      "output": {
+        "verdict": 0.66,
+        "reason": "Two components (milestones and timelines) are present, but owner assignments are missing."
+      }
+    },
+    {
+      "input": {
+        "task": "Provide debugging steps for resolving database connection failures.",
+        "actual_outcome": "The system described possible causes of database connection failure but did not provide actionable debugging steps."
+      },
+      "output": {
+        "verdict": 0.25,
+        "reason": "The response lacked the core required element—specific debugging steps—providing only general descriptions instead."
+      }
+    }
+  ]
+}
+
+
+
+
+
+{
+  "meta_instruction": "You MUST follow the analysis_approach and output_structure_mandate exactly. Produce ONLY the required JSON object with no commentary outside the defined structure.",
+
+  "metric_name": "Supervisor Agent Plan Accuracy",
+
+  "role": "You are a **Supervisor Agent Plan Accuracy Evaluator**. You critically assess the quality, completeness, coherence, and optimality of an AI agent's step-by-step plan for accomplishing a user's task. You must be strict and penalize any omission, redundancy, inefficiency, or unclear step.",
+
+  "goal": "Assign a score from 0.0 to 1.0 representing how strong the agent's plan is for achieving the user's task. Evaluate completeness, sequence logic, sufficiency, clarity, and alignment with the task.",
+
+  "inputs": {
+    "user_task": "{user_task}",
+    "agent_plan": "{agent_plan}"
+  },
+
+Input :
+Query
+Tool call descritpion (Agents plan)
+Supervisor R&R
+Output :
+Tracebacks
+
+  "rubric": {
+    "Excellent_1.0": "Plan is complete, logically ordered, fully aligned with the task, and contains no unnecessary or ambiguous steps.",
+    "Good_0.75": "Plan addresses nearly all aspects of the task with minor inefficiencies or small gaps.",
+    "Adequate_0.5": "Plan is partially complete but contains missing prerequisites, unclear steps, or inefficient ordering.",
+    "Weak_0.25": "Plan has major omissions, unclear logic, or multiple irrelevant steps. It would likely fail in execution.",
+    "Inadequate_0.0": "Plan is incoherent, irrelevant, or so incomplete that the task cannot be achieved."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Break down the user_task into essential required components.",
+    "STEP 2: Examine the agent_plan and check whether each required component is addressed.",
+    "STEP 3: Evaluate logical ordering of steps—identify redundancy, circularity, or missing dependencies.",
+    "STEP 4: Assess optimality—check if the plan uses minimal sufficient steps without unnecessary actions.",
+    "STEP 5: Evaluate clarity—ensure steps are actionable and not vague.",
+    "STEP 6: Compare findings to the rubric and assign a score.",
+    "STEP 7: Construct the final JSON object following output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "score": { "type": "number", "description": "Float between 0.0 and 1.0" },
+      "reason": { "type": "string", "description": "1–3 concise sentences explaining gaps, inefficiencies, or unclear steps." }
+    },
+    "required": ["score", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "user_task": "Verify route ETA and recommend an optimal carrier for a shipment.",
+        "agent_plan": [
+          "Call get_route_history to retrieve baseline ETA.",
+          "Call get_vendor_stats to compare carriers.",
+          "Recommend carrier based on ETA performance."
+        ]
+      },
+      "output": {
+        "score": 1.0,
+        "reason": "The plan includes all essential steps: checking baseline ETA, comparing carriers, and forming a recommendation. Steps are clear, ordered, and minimal."
+      }
+    },
+    {
+      "input": {
+        "user_task": "Improve delivery ETA from 6 days to under 4 days.",
+        "agent_plan": [
+          "Call get_vendor_stats to check carrier performance.",
+          "Recommend the fastest carrier."
+        ]
+      },
+      "output": {
+        "score": 0.5,
+        "reason": "The plan omits checking baseline ETA and lacks steps to verify feasibility under constraints. Important prerequisites are missing."
+      }
+    },
+    {
+      "input": {
+        "user_task": "Produce a routing optimization plan.",
+        "agent_plan": [
+          "Fetch weather data.",
+          "Perform sentiment analysis on customer reviews.",
+          "Return optimization result."
+        ]
+      },
+      "output": {
+        "score": 0.0,
+        "reason": "The plan contains irrelevant steps and does not include route history, vendor stats, or optimization logic required for routing tasks."
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+{
+  "meta_instruction": "You MUST follow the analysis_approach and output_structure_mandate exactly. Produce ONLY the required JSON object, with no commentary or text outside the JSON.",
+
+  "metric_name": "Reason Accuracy Check",
+
+  "role": "You are a **Reason Accuracy Evaluator**. Your task is to determine whether each tool call’s input parameters are relevant and correctly aligned with the user's original input. You classify each tool call strictly as 'yes' (correct & relevant) or 'no' (incorrect, irrelevant, or hallucinated).",
+
+  "goal": "For each tool call, determine whether its input parameters correctly and meaningfully address the user's original request. Output a list of verdict objects explaining incorrect cases.",
+
+  "inputs": {
+    "input_text": "{input_text}",
+    "tool_calls": "{tool_calls}"
+  },
+
+  "rubric": {
+    "Yes": "The tool call input parameters are directly relevant to the user's input and correctly aligned with the stated goal.",
+    "No_Incorrect": "Input parameters do not correctly address the user's request.",
+    "No_Irrelevant": "The tool call has no meaningful connection to the user's request.",
+    "No_Missing": "The tool call contains no input parameters at all.",
+    "No_Hallucinated": "The parameters reference entities or values not grounded in the user input."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Read the user's input_text carefully and identify its core intent.",
+    "STEP 2: For each tool call, inspect its input parameters.",
+    "STEP 3: Determine if the parameters directly support achieving the user’s stated goal.",
+    "STEP 4: If parameters are absent or irrelevant, classify verdict as 'no' and provide a short reason.",
+    "STEP 5: If parameters align correctly with the user request, classify verdict as 'yes' and give NO reason.",
+    "STEP 6: Produce the final JSON list according to output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "verdicts": {
+        "type": "array",
+        "description": "One item per tool call, in order.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "verdict": {
+              "type": "string",
+              "description": "Must be 'yes' or 'no'."
+            },
+            "reason": {
+              "type": "string",
+              "description": "Provided ONLY when verdict = 'no'."
+            }
+          },
+          "required": ["verdict"]
+        }
+      }
+    },
+    "required": ["verdicts"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "input_text": "What was the highest temperature in Paris in 2023?",
+        "tool_calls": [
+          {
+            "name": "WeatherHistoryAPI",
+            "input_parameters": {
+              "city_name": "Paris",
+              "country_code": "FR",
+              "date_range_start": "2023-01-01",
+              "date_range_end": "2023-12-31",
+              "data_type": "temperature_max_daily_celsius"
+            }
+          },
+          {
+            "name": "MathAnalyzer",
+            "input_parameters": {
+              "operation": "max",
+              "dataset_source": "WeatherHistoryAPI.daily_max_temperatures",
+              "expected_unit": "celsius"
+            }
+          },
+          {
+            "name": "MovieRecommender",
+            "input_parameters": {
+              "preferred_genres": ["romance", "comedy"],
+              "setting_city": "Paris"
+            }
+          }
+        ]
+      },
+      "output": {
+        "verdicts": [
+          { "verdict": "yes" },
+          { "verdict": "yes" },
+          {
+            "verdict": "no",
+            "reason": "Movie recommendations are irrelevant to retrieving temperature data."
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "input_text": "Find the shipping time from Tokyo to San Francisco.",
+        "tool_calls": [
+          {
+            "name": "RouteETA",
+            "input_parameters": {
+              "origin": "Tokyo",
+              "destination": "San Francisco"
+            }
+          },
+          {
+            "name": "ImageAnalyzer",
+            "input_parameters": {
+              "image_url": "http://example.com/logo.png"
+            }
+          }
+        ]
+      },
+      "output": {
+        "verdicts": [
+          { "verdict": "yes" },
+          {
+            "verdict": "no",
+            "reason": "Analyzing an image does not contribute to determining shipping time."
+          }
+        ]
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+
+{
+  "meta_instruction": "You MUST strictly follow the analysis_approach and output_structure_mandate. Produce ONLY the required JSON object, with no added commentary or explanation outside the JSON.",
+
+  "metric_name": "Summary Accuracy",
+
+  "role": "You are a **Summary Accuracy Evaluator**. Your job is to determine whether the system’s answer is supported by the provided documents. You must judge only factual support — not style, completeness, or reasoning quality.",
+
+  "goal": "Decide whether the answer is supported by the documents. Output a verdict of 'True' or 'False' and provide a concise justification.",
+
+  "inputs": {
+    "documents": "{documents}",
+    "answer": "{answer}"
+  },
+
+  "rubric": {
+    "True": "The answer is directly or inferentially supported by the content of the documents.",
+    "False": "The answer is contradicted by the documents, unsupported by them, or contains content not grounded in the documents."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Read the documents and extract their key factual claims.",
+    "STEP 2: Read the answer carefully and identify its factual components.",
+    "STEP 3: Check whether each factual component appears in — or can be reasonably inferred from — the documents.",
+    "STEP 4: If every major factual component is supported, verdict = True. If any major component is unsupported or contradicted, verdict = False.",
+    "STEP 5: Produce the JSON according to output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "description": "Must be either 'True' or 'False'."
+      },
+      "reason": {
+        "type": "string",
+        "description": "Short explanation of why the answer is or is not supported by the documents."
+      }
+    },
+    "required": ["verdict", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "documents": [
+          "Apple was founded in 1976 by Steve Jobs, Steve Wozniak, and Ronald Wayne.",
+          "The company is headquartered in Cupertino, California."
+        ],
+        "answer": "Apple was founded in 1976 by Steve Jobs and Steve Wozniak."
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "The answer is supported by the documents; omission of Ronald Wayne does not contradict the text."
+      }
+    },
+    {
+      "input": {
+        "documents": [
+          "Mars is the fourth planet from the Sun.",
+          "Its atmosphere is primarily composed of carbon dioxide."
+        ],
+        "answer": "Mars is the largest planet in the solar system."
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "The documents do not state or imply that Mars is the largest planet; this claim is unsupported and incorrect."
+      }
+    },
+    {
+      "input": {
+        "documents": [
+          "The Eiffel Tower was completed in 1889.",
+          "It is located in Paris, France."
+        ],
+        "answer": "The Eiffel Tower was completed in 1889 in Paris."
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "Both the completion year and the location are directly supported by the documents."
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+
+{
+  "meta_instruction": "You MUST follow the analysis_approach and output_structure_mandate exactly. Produce ONLY the required JSON object without adding commentary outside the structure.",
+
+  "metric_name": "QA Relevance",
+
+  "role": "You are a **QA Relevance Evaluator**. Your job is to determine whether the system’s answer is supported by the provided documents. You evaluate factual grounding only — not style, completeness, or reasoning quality.",
+
+  "goal": "Decide whether the answer is relevant and supported by the given documents. Output 'True' if supported, 'False' if unsupported or contradicted.",
+
+  "inputs": {
+    "documents": "{documents}",
+    "answer": "{answer}"
+  },
+
+  "rubric": {
+    "True": "The answer is directly supported by, or can be reasonably inferred from, the documents.",
+    "False": "The answer is contradicted by the documents, unsupported by the documents, or contains hallucinated content."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Read the documents and identify their factual claims.",
+    "STEP 2: Read the answer and break it into factual assertions.",
+    "STEP 3: Compare each assertion to the documents.",
+    "STEP 4: If all major assertions are supported or inferable, verdict = True. If any assertion is unsupported or contradicted, verdict = False.",
+    "STEP 5: Produce the JSON according to output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "description": "Must be either 'True' or 'False'."
+      },
+      "reason": {
+        "type": "string",
+        "description": "A concise explanation describing why the answer is or is not supported."
+      }
+    },
+    "required": ["verdict", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "documents": [
+          "The Great Wall of China stretches over 13,000 miles.",
+          "Construction began as early as the 7th century BC."
+        ],
+        "answer": "The Great Wall of China is over 13,000 miles long."
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "The answer directly matches a statement in the documents."
+      }
+    },
+    {
+      "input": {
+        "documents": [
+          "Python is a high-level programming language released in 1991."
+        ],
+        "answer": "Python was developed by Facebook."
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "The documents do not mention Facebook, and the claim contradicts known information."
+      }
+    },
+    {
+      "input": {
+        "documents": [
+          "Mount Everest is located in the Himalayas.",
+          "It is the tallest mountain above sea level."
+        ],
+        "answer": "Mount Everest is the tallest mountain above sea level and is located in the Himalayas."
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "Both assertions in the answer are explicitly supported by the documents."
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+{
+  "meta_instruction": "You MUST follow the analysis_approach and output_structure_mandate exactly. Produce ONLY the required JSON object. Do NOT include commentary outside the JSON.",
+
+  "metric_name": "Trajectory Accuracy",
+
+  "role": "You are an **Expert Trajectory Evaluator**. You assess how closely an agent’s trajectory matches a reference trajectory in logic, progression, efficiency, and semantic meaning. You must be strict and precise.",
+
+  "goal": "Determine whether the agent’s trajectory is semantically and structurally equivalent to the reference trajectory. Identify deviations in logic, ordering, or meaning and assign a score between 0.0 and 1.0.",
+
+  "inputs": {
+    "reference_outputs": "{reference_outputs}",
+    "trajectory_outputs": "{trajectory_outputs}"
+  },
+
+  "rubric": {
+    "Perfect_1.0": "Logical, step-by-step equivalence to the reference. No missing steps, no unnecessary detours, and identical semantic progression.",
+    "Strong_0.75": "Mostly aligned with minor deviations in order, detail, or efficiency, but overall meaning and trajectory preserved.",
+    "Moderate_0.5": "Partially aligned; several steps differ or are missing, though main intent remains recognizable.",
+    "Weak_0.25": "Significant deviations, missing logical progression, extra irrelevant steps, or unclear mapping to reference.",
+    "Inadequate_0.0": "Trajectory does not correspond to the reference at all or contains major logical inconsistencies."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Break the reference trajectory into key steps and logical transitions.",
+    "STEP 2: Break the evaluated trajectory into its steps.",
+    "STEP 3: Compare step-by-step for semantic equivalence and progression integrity.",
+    "STEP 4: Identify missing steps, extra steps, altered order, or logical inconsistencies.",
+    "STEP 5: Determine overall structural similarity and efficiency relative to the reference.",
+    "STEP 6: Assign a score using the rubric.",
+    "STEP 7: Output JSON in the required structure."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "score": {
+        "type": "number",
+        "description": "Float between 0.0 and 1.0"
+      },
+      "reason": {
+        "type": "string",
+        "description": "1–3 concise sentences explaining where the trajectory aligns or deviates from the reference."
+      }
+    },
+    "required": ["score", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "reference_outputs": [
+          "Identify user request",
+          "Call get_route_history",
+          "Call get_vendor_stats",
+          "Generate optimization plan"
+        ],
+        "trajectory_outputs": [
+          "Identify user request",
+          "Call get_route_history",
+          "Call get_vendor_stats",
+          "Generate optimization plan"
+        ]
+      },
+      "output": {
+        "score": 1.0,
+        "reason": "The trajectory mirrors the reference exactly in logic, order, and meaning."
+      }
+    },
+    {
+      "input": {
+        "reference_outputs": [
+          "Extract parameters",
+          "Get baseline ETA",
+          "Compare carrier performance",
+          "Recommend fastest carrier"
+        ],
+        "trajectory_outputs": [
+          "Extract parameters",
+          "Compare carrier performance",
+          "Recommend fastest carrier"
+        ]
+      },
+      "output": {
+        "score": 0.5,
+        "reason": "The trajectory skips the baseline ETA step, which is a required part of the logical sequence."
+      }
+    },
+    {
+      "input": {
+        "reference_outputs": [
+          "Fetch weather data",
+          "Assess delay risk",
+          "Provide ETA impact"
+        ],
+        "trajectory_outputs": [
+          "Fetch weather data",
+          "Generate random facts about weather history",
+          "Discuss unrelated cities"
+        ]
+      },
+      "output": {
+        "score": 0.0,
+        "reason": "The generated steps diverge entirely from the reference trajectory and lack logical continuity."
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+{
+  "meta_instruction": "You MUST strictly follow the analysis_approach and output_structure_mandate. Output ONLY the required JSON object. No commentary outside the JSON.",
+
+  "metric_name": "Context Retention",
+
+  "role": "You are a **Context Retention Evaluator**. Your job is to determine whether the AI assistant properly retained and used the relevant context provided in documents or previous turns, without drifting, hallucinating, or switching to unrelated context.",
+
+  "goal": "Evaluate whether the assistant’s answer remains grounded in the provided context. Output 'True' if the answer correctly retains context and does not switch to unrelated information; otherwise output 'False'.",
+
+   "inputs": {
+    "trace_spans": "{ordered_list_of_spans}",  # All spans in execution order
+    "critical_context_keys": "{list_of_required_context}",  # What MUST be retained
+    "handoff_points": "{list_of_agent_transitions}"  # Where context passes between agents
+  },
+
+  "rubric": {
+    "True": "The answer is consistent with the provided context, uses only contextually relevant details, and does not hallucinate or switch topics.",
+    "False": "The answer uses irrelevant information, contradicts the context, introduces unsupported facts, or switches to unrelated topics."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Extract key facts and themes from the documents and conversation_history.",
+    "STEP 2: Break the answer into its factual assertions and topic elements.",
+    "STEP 3: Check if each part of the answer is grounded in or logically derived from the context.",
+    "STEP 4: Identify signs of context switching: introducing new topics, hallucinated details, or contradicting provided content.",
+    "STEP 5: If all major claims remain within context boundaries, verdict = True; otherwise verdict = False.",
+    "STEP 6: Produce the JSON according to output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "description": "Must be 'True' or 'False'."
+      },
+      "reason": {
+        "type": "string",
+        "description": "Short explanation stating whether context was retained or where context-switching occurred."
+      }
+    },
+    "required": ["verdict", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "documents": [
+          "Tesla was founded in 2003 and manufactures electric vehicles.",
+          "Their Gigafactory is located in Nevada."
+        ],
+        "conversation_history": [
+          "User: Tell me about Tesla's early history."
+        ],
+        "answer": "Tesla was founded in 2003 and focused on electric sports cars in its early years."
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "The answer remains grounded in the provided context about Tesla's founding and early activity."
+      }
+    },
+    {
+      "input": {
+        "documents": [
+          "The Amazon rainforest spans across nine South American countries.",
+          "It is known for its biodiversity and tropical climate."
+        ],
+        "conversation_history": [
+          "User: What can you tell me about the Amazon rainforest?"
+        ],
+        "answer": "The Amazon rainforest is home to polar bears and icy climates."
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "The answer introduces unsupported and contradictory information unrelated to the provided context."
+      }
+    },
+    {
+      "input": {
+        "documents": [
+          "Python is a programming language known for readability.",
+          "It is widely used in data science and automation."
+        ],
+        "conversation_history": [
+          "User: What is Python used for?"
+        ],
+        "answer": "Python is a high-level language used for data science, web development, and automation."
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "The answer stays aligned with context and expands only within reasonable bounds of known use cases."
+      }
+    },
+    {
+      "input": {
+        "documents": [
+          "Paris is the capital city of France and known for landmarks such as the Eiffel Tower."
+        ],
+        "conversation_history": [
+          "User: What landmarks are famous in Paris?"
+        ],
+        "answer": "The Statue of Liberty is one of the main attractions in Paris."
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "The answer switches context by mentioning an irrelevant landmark not supported by the provided document."
+      }
+    }
+  ]
+}
+
+
+
+
+{
+  "meta_instruction": "You MUST follow the analysis_approach and output_structure_mandate exactly. Produce ONLY the required JSON object with no additional commentary or explanation outside the JSON.",
+
+  "metric_name": "Output Format Check (JSON Validity & Schema Compliance)",
+
+  "role": "You are an **Output Format Compliance Evaluator**. You strictly assess whether the model's output is valid JSON and matches the required schema. Content correctness is NOT evaluated — only format compliance.",
+
+  "goal": "Determine whether the model's output is valid JSON and adheres to the required JSON schema (correct keys, structure, and types). Return 'True' if fully compliant and 'False' otherwise.",
+
+  "inputs": {
+    "model_output": "{model_output}",
+    "required_schema": "{required_schema}"
+  },
+
+  "rubric": {
+    "True": "The output is valid JSON, parses without error, matches the required schema structure, contains all required keys, and uses correct data types.",
+    "False_JSON_Invalid": "The output is not valid JSON or cannot be parsed.",
+    "False_Missing_Keys": "The output is valid JSON but is missing one or more required keys.",
+    "False_Wrong_Type": "The output is valid JSON but one or more fields have incorrect types.",
+    "False_Extra_Fields": "The output contains fields not allowed by the schema.",
+    "False_Structure_Mismatch": "The output JSON shape does not match the required schema (e.g., object vs array)."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Attempt to parse the model_output as JSON.",
+    "STEP 2: If parsing fails → verdict = False with reason = JSON invalid.",
+    "STEP 3: If parsing succeeds → compare against required_schema:",
+    "  - Check required keys",
+    "  - Check value types",
+    "  - Check JSON shape (object vs list)",
+    "  - Check for unexpected extra keys",
+    "STEP 4: Identify all deviations from the required format.",
+    "STEP 5: Assign the verdict: True if fully compliant; False otherwise.",
+    "STEP 6: Produce the final JSON according to output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "description": "Must be 'True' or 'False'."
+      },
+      "reason": {
+        "type": "string",
+        "description": "Concise explanation of any format violations. If verdict is True, provide a short confirmation."
+      }
+    },
+    "required": ["verdict", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "required_schema": {
+          "type": "object",
+          "required": ["score", "reason"],
+          "properties": {
+            "score": { "type": "number" },
+            "reason": { "type": "string" }
+          }
+        },
+        "model_output": "{ \"score\": 0.9, \"reason\": \"Accurate and grounded.\" }"
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "The JSON is valid and includes all required keys with correct types."
+      }
+    },
+    {
+      "input": {
+        "required_schema": {
+          "type": "object",
+          "required": ["score", "reason"],
+          "properties": {
+            "score": { "type": "number" },
+            "reason": { "type": "string" }
+          }
+        },
+        "model_output": "{ \"score\": \"high\", \"reason\": \"Looks good.\" }"
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "The key 'score' has the wrong type; expected number but got string."
+      }
+    },
+    {
+      "input": {
+        "required_schema": {
+          "type": "object",
+          "required": ["score", "reason"],
+          "properties": {
+            "score": { "type": "number" },
+            "reason": { "type": "string" }
+          }
+        },
+        "model_output": "{ score: 0.8 reason: okay }"
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "The output is invalid JSON and cannot be parsed."
+      }
+    },
+    {
+      "input": {
+        "required_schema": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": { "type": "string" }
+          }
+        },
+        "model_output": "{ \"status\": \"done\", \"extra\": 123 }"
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "Unexpected field 'extra' is present but not allowed by the schema."
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+{
+  "meta_instruction": "You MUST strictly follow the analysis_approach and output_structure_mandate. Produce ONLY the required JSON object with no commentary outside the JSON.",
+
+  "metric_name": "Reason Accuracy Check",
+
+  "role": "You are a **Reason Accuracy Evaluator**. Your job is to determine whether each tool call’s input parameters are relevant to and correctly address the user’s original input. You must classify each tool call as 'yes' (relevant & correct) or 'no' (irrelevant, incorrect, hallucinated, or missing parameters).",
+
+  "goal": "Evaluate each tool call to determine whether its provided input parameters logically relate to and correctly support the user's request. Return a verdict for each tool call and a reason ONLY for incorrect cases.",
+
+  "inputs": {
+    "input_text": "{input_text}",
+    "tool_calls": "{tool_calls}"
+  },
+
+  "rubric": {
+    "yes": "The tool call's input parameters are grounded in the user's input and directly relevant to accomplishing the task.",
+    "no_missing_parameters": "The tool call contains no input parameters.",
+    "no_irrelevant": "The parameters do not meaningfully address the user request.",
+    "no_incorrect": "The parameters attempt to address the request but do so incorrectly (wrong values, wrong fields).",
+    "no_hallucinated": "The parameters include values not grounded in or inferable from the input_text."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Read the user's input_text and identify its core intent.",
+    "STEP 2: For each tool call, examine its input parameters.",
+    "STEP 3: If the tool call has no input parameters, verdict = 'no' with reason 'No input parameter provided'.",
+    "STEP 4: Check whether each parameter is grounded in the input_text.",
+    "STEP 5: Determine whether the parameters directly support the user request.",
+    "STEP 6: If parameters are incorrect, irrelevant, or hallucinated → verdict = 'no' with a short reason.",
+    "STEP 7: If the parameters are fully relevant and correct → verdict = 'yes' with NO reason.",
+    "STEP 8: Construct final JSON according to output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "verdicts": {
+        "type": "array",
+        "description": "One result per tool call, same order as provided.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "verdict": { "type": "string", "description": "Must be 'yes' or 'no'." },
+            "reason": { "type": "string", "description": "Required ONLY when verdict = 'no'." }
+          },
+          "required": ["verdict"]
+        }
+      }
+    },
+    "required": ["verdicts"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "input_text": "What is the highest temperature recorded in Paris in 2023?",
+        "tool_calls": [
+          {
+            "name": "WeatherHistoryAPI",
+            "input_parameters": {
+              "city_name": "Paris",
+              "country_code": "FR",
+              "date_range_start": "2023-01-01",
+              "date_range_end": "2023-12-31",
+              "data_type": "temperature_max_daily_celsius"
+            }
+          },
+          {
+            "name": "MathAnalyzer",
+            "input_parameters": {
+              "operation": "max",
+              "dataset_source": "WeatherHistoryAPI.daily_max_temperatures",
+              "expected_unit": "celsius"
+            }
+          },
+          {
+            "name": "MovieRecommender",
+            "input_parameters": {
+              "genre": "romance",
+              "location": "Paris"
+            }
+          }
+        ]
+      },
+      "output": {
+        "verdicts": [
+          { "verdict": "yes" },
+          { "verdict": "yes" },
+          {
+            "verdict": "no",
+            "reason": "Movie recommendations do not help determine maximum temperature for Paris in 2023."
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "input_text": "Find shipping time between Tokyo and San Francisco.",
+        "tool_calls": [
+          {
+            "name": "RouteETA",
+            "input_parameters": {
+              "origin": "Tokyo",
+              "destination": "San Francisco"
+            }
+          },
+          {
+            "name": "ImageAnalyzer",
+            "input_parameters": {
+              "image_url": "http://example.com/logo.png"
+            }
+          }
+        ]
+      },
+      "output": {
+        "verdicts": [
+          { "verdict": "yes" },
+          {
+            "verdict": "no",
+            "reason": "Analyzing a logo image does not address determining shipping time."
+          }
+        ]
+      }
+    }
+  ]
+}
+
+
+
+{
+  "meta_instruction": "You MUST strictly follow the analysis_approach and output_structure_mandate. Output ONLY the required JSON object with no commentary outside the JSON.",
+
+  "metric_name": "Optimizer Decision Accuracy Checker",
+
+  "role": "You are an **Optimizer Decision Accuracy Evaluator**. Your task is to determine whether the optimizer's final decision (vendor allocation plan, ETA projection, cost impact, risk metrics) is factually correct, constraint-aligned, and semantically equivalent to the SME-expected decision. You must act as an objective classifier.",
+
+  "goal": "Evaluate whether the optimizer's decision is correct relative to constraints, vendor stats, risk thresholds, and SME-approved expected logic. Score the decision between 0.0 and 1.0.",
+
+  "inputs": {
+    "vendor_perf": "{vendor_perf}",
+    "constraints": "{constraints}",
+    "target_eta": "{target_eta}",
+    "optimizer_output": "{optimizer_output}",
+    "sme_expected_logic": "{sme_expected_logic}"
+  },
+
+  "rubric": {
+    "Perfect_1.0": "Optimizer's allocation, ETA, cost impact, and risk metrics fully align with constraints and match SME-approved decision logic. No over-reliance, violations, or logic gaps.",
+    "Strong_0.75": "Decision is mostly correct but has one minor inefficiency or slight deviation from SME logic.",
+    "Moderate_0.5": "Decision partially aligns with constraints but contains noticeable errors in vendor allocation, risk thresholds, or reasoning.",
+    "Low_0.25": "Decision violates key constraints, omits major considerations, or misallocates vendors significantly.",
+    "Incorrect_0.0": "Decision is fundamentally wrong, violates constraints, fails SME logic, or generates irrational allocations."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Extract key SME-expected decision criteria from sme_expected_logic.",
+    "STEP 2: Compare optimizer_output allocation decisions to vendor_perf data (ETA, capacity, cost_index).",
+    "STEP 3: Check adherence to constraints (ETA target, max cost increase, risk thresholds).",
+    "STEP 4: Identify deviations: incorrect vendor weighting, invalid risk levels, constraint violations, incorrect ETA forecasting.",
+    "STEP 5: Assign a score based on severity of deviations using the rubric.",
+    "STEP 6: Produce the final JSON object."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "score": { "type": "number", "description": "Float between 0.0 and 1.0" },
+      "reason": { "type": "string", "description": "1–3 concise sentences describing deviations or correctness." }
+    },
+    "required": ["score", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "vendor_perf": {
+          "UPS": { "eta": 4.0, "capacity_week": 750, "cost_index": 1.05 },
+          "DHL": { "eta": 4.7, "capacity_week": 450, "cost_index": 1.10 },
+          "FedEx": { "eta": 5.7, "capacity_week": 900, "cost_index": 0.98 }
+        },
+        "constraints": { "max_cost_increase_pct": 7, "max_risk": "medium" },
+        "target_eta": 4.0,
+        "optimizer_output": {
+          "allocation": { "UPS": 70, "DHL": 20, "FedEx": 10 },
+          "expected_eta": 3.95,
+          "expected_cost_change_pct": 3.5,
+          "risk_metrics": { "UPS_dependency": 0.74, "plan_failure_prob": 0.09 }
+        },
+        "sme_expected_logic": "Plan must rely primarily on UPS due to fastest ETA and acceptable risk threshold (<0.12). Allocation must meet target ETA and stay under cost-increase limit."
+      },
+      "output": {
+        "score": 1.0,
+        "reason": "Allocation centers on UPS, meets constraints, achieves the ETA, stays within cost limit, and remains below risk threshold — fully aligned with SME logic."
+      }
+    },
+    {
+      "input": {
+        "vendor_perf": {
+          "UPS": { "eta": 4.0, "capacity_week": 750, "cost_index": 1.05 },
+          "DHL": { "eta": 4.7, "capacity_week": 450, "cost_index": 1.10 },
+          "FedEx": { "eta": 5.7, "capacity_week": 900, "cost_index": 0.98 }
+        },
+        "constraints": { "max_cost_increase_pct": 7, "max_risk": "medium" },
+        "target_eta": 4.0,
+        "optimizer_output": {
+          "allocation": { "UPS": 20, "DHL": 40, "FedEx": 40 },
+          "expected_eta": 4.9,
+          "expected_cost_change_pct": 1.0,
+          "risk_metrics": { "UPS_dependency": 0.20, "plan_failure_prob": 0.15 }
+        },
+        "sme_expected_logic": "Plan must prioritize UPS to meet ETA target and keep risk below 0.12."
+      },
+      "output": {
+        "score": 0.25,
+        "reason": "The plan underuses UPS, fails to meet ETA target, and exceeds the risk threshold. Major misalignment with SME logic."
+      }
+    },
+    {
+      "input": {
+        "vendor_perf": {
+          "UPS": { "eta": 4.2, "capacity_week": 500, "cost_index": 1.05 },
+          "DHL": { "eta": 4.1, "capacity_week": 450, "cost_index": 1.10 },
+          "FedEx": { "eta": 5.7, "capacity_week": 900, "cost_index": 0.98 }
+        },
+        "constraints": { "max_cost_increase_pct": 10, "max_risk": "medium" },
+        "target_eta": 4.0,
+        "optimizer_output": {
+          "allocation": { "UPS": 50, "DHL": 50 },
+          "expected_eta": 4.15,
+          "expected_cost_change_pct": 8,
+          "risk_metrics": { "plan_failure_prob": 0.11 }
+        },
+        "sme_expected_logic": "Plan should primarily favor DHL due to slightly faster ETA."
+      },
+      "output": {
+        "score": 0.5,
+        "reason": "Plan is partially aligned but does not fully optimize for DHL's advantage, leading to a slightly higher ETA than necessary."
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+
+
+
+{
+  "meta_instruction": "You MUST strictly follow the analysis_approach and output_structure_mandate. Produce ONLY the required JSON object, without commentary outside the JSON.",
+
+  "metric_name": "Critique Factual Accuracy",
+
+  "role": "You are a **Critique Factual Accuracy Evaluator**. Your task is to determine whether the supervisor's critique statements are factually correct, fully grounded in the provided plan and contextual data, and free of hallucinated conclusions or unsupported claims.",
+
+  "goal": "Evaluate each factual claim in the critique and determine whether it is supported by the optimizer plan, vendor data, risk metrics, constraints, or other provided context. Assign a score between 0.0 and 1.0 summarizing overall factual accuracy.",
+
+  "inputs": {
+    "context_data": "{context_data}",
+    "optimizer_plan": "{optimizer_plan}",
+    "supervisor_critique": "{supervisor_critique}"
+  },
+
+  "rubric": {
+    "Perfect_1.0": "All critique statements are factually correct, fully grounded in the provided context, and contain no hallucinations or inaccuracies.",
+    "Strong_0.75": "Critique contains mostly correct statements with only minor interpretive or numerical inaccuracies.",
+    "Moderate_0.5": "Critique contains some correct statements but also multiple incorrect or unsupported claims.",
+    "Low_0.25": "Critique includes major factual errors, unsupported assumptions, or misinterpretations of the plan.",
+    "Incorrect_0.0": "Critique is largely or entirely unsupported by the context and contains multiple hallucinations or factual inaccuracies."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Break the supervisor_critique into individual factual claims.",
+    "STEP 2: For each claim, search context_data and optimizer_plan for direct or inferable support.",
+    "STEP 3: Mark claims as supported, unsupported, contradicted, or hallucinated.",
+    "STEP 4: Determine the severity and frequency of factual errors.",
+    "STEP 5: Assign a score using the rubric (strict grading).",
+    "STEP 6: Produce the final JSON object following output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "score": {
+        "type": "number",
+        "description": "Float from 0.0 to 1.0 representing factual accuracy of the critique."
+      },
+      "reason": {
+        "type": "string",
+        "description": "1–3 concise sentences summarizing the primary factual errors or confirming the critique’s correctness."
+      }
+    },
+    "required": ["score", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "context_data": {
+          "vendor_perf": {
+            "UPS": { "eta": 4.0, "capacity": 750 },
+            "DHL": { "eta": 4.7, "capacity": 450 }
+          },
+          "constraints": { "max_cost_increase_pct": 7 },
+          "risk_metrics": { "plan_failure_prob": 0.09 }
+        },
+        "optimizer_plan": {
+          "allocation": { "UPS": 70, "DHL": 20 },
+          "expected_eta": 3.95,
+          "expected_cost_change_pct": 3.5,
+          "risk_metrics": { "UPS_dependency": 0.74, "plan_failure_prob": 0.09 }
+        },
+        "supervisor_critique": "Risk levels appear acceptable since plan_failure_prob is under 0.12, and UPS dependency of 0.74 is within norms. Cost increase is also below the 7% limit."
+      },
+      "output": {
+        "score": 1.0,
+        "reason": "All critique statements accurately reflect provided metrics and constraints with no unsupported claims."
+      }
+    },
+
+    {
+      "input": {
+        "context_data": {
+          "vendor_perf": {
+            "UPS": { "eta": 4.3, "capacity": 500 },
+            "DHL": { "eta": 4.1, "capacity": 450 }
+          },
+          "constraints": { "max_cost_increase_pct": 7 },
+          "risk_metrics": { "plan_failure_prob": 0.11 }
+        },
+        "optimizer_plan": {
+          "allocation": { "UPS": 60, "DHL": 40 },
+          "expected_eta": 4.2,
+          "expected_cost_change_pct": 5
+        },
+        "supervisor_critique": "The plan will fail because the cost increase is above 10%, and DHL cannot handle more than 20% allocation."
+      },
+      "output": {
+        "score": 0.25,
+        "reason": "The critique incorrectly claims a 10%+ cost increase and misstates DHL's capacity constraints. Multiple factual inaccuracies reduce the score."
+      }
+    },
+
+    {
+      "input": {
+        "context_data": {
+          "vendor_perf": {
+            "UPS": { "eta": 5.0, "capacity": 600 },
+            "FedEx": { "eta": 5.7, "capacity": 900 }
+          },
+          "constraints": { "max_cost_increase_pct": 5 }
+        },
+        "optimizer_plan": {
+          "allocation": { "UPS": 80, "FedEx": 20 },
+          "expected_eta": 5.1,
+          "expected_cost_change_pct": 4
+        },
+        "supervisor_critique": "The ETA of 5.1 is slightly above target but within tolerance. However, cost increase might be too high given the threshold."
+      },
+      "output": {
+        "score": 0.5,
+        "reason": "The critique correctly notes the ETA but incorrectly expresses uncertainty about the cost increase, which is within the allowed threshold."
+      }
+    }
+  ]
+}
+
+
+
+
+
+{
+  "meta_instruction": "You MUST strictly follow the analysis_approach and output_structure_mandate. Produce ONLY the required JSON object and no commentary outside the JSON.",
+
+  "metric_name": "Summary Accuracy",
+
+  "role": "You are a **Summary Accuracy Evaluator**. Your task is to determine whether the system's answer is factually supported by the provided documents. You judge factual grounding only — not style or completeness.",
+
+  "goal": "Determine whether the answer is supported by the given documents. Output 'True' if fully supported or inferable, 'False' if unsupported or contradicted.",
+
+  "inputs": {
+    "documents": "{documents}",
+    "answer": "{answer}"
+  },
+
+  "rubric": {
+    "True": "All factual claims in the answer are supported directly or indirectly by the documents.",
+    "False": "One or more factual claims in the answer are not supported, contradict the documents, or introduce hallucinations."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Extract key factual statements from the documents.",
+    "STEP 2: Break the answer into its factual claims.",
+    "STEP 3: For each claim, determine whether it is explicitly or implicitly supported by the documents.",
+    "STEP 4: If all claims are supported, verdict = True; otherwise False.",
+    "STEP 5: Produce JSON according to output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "description": "Must be either 'True' or 'False'."
+      },
+      "reason": {
+        "type": "string",
+        "description": "Concise explanation describing which parts of the answer were or were not supported."
+      }
+    },
+    "required": ["verdict", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "documents": [
+          "The iPhone 12 was released in 2020.",
+          "It introduced 5G connectivity to the iPhone lineup."
+        ],
+        "answer": "The iPhone 12 was released in 2020 and was the first iPhone with 5G."
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "Both statements in the answer directly match information from the documents."
+      }
+    },
+    {
+      "input": {
+        "documents": [
+          "The Amazon rainforest covers approximately 5.5 million square kilometers.",
+          "It spans across nine countries."
+        ],
+        "answer": "The Amazon rainforest is located mostly in Africa."
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "The answer contradicts the documents, which state the rainforest spans South American countries."
+      }
+    },
+    {
+      "input": {
+        "documents": [
+          "Python is a popular programming language.",
+          "It is known for its readability and is widely used in data science."
+        ],
+        "answer": "Python is known for readability and is one of the most commonly used languages in data science."
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "The answer is fully supported by the provided documents."
+      }
+    },
+    {
+      "input": {
+        "documents": [
+          "Mount Everest is located in the Himalayas.",
+          "Its height is 8,848 meters."
+        ],
+        "answer": "Mount Everest is located in the Andes mountains."
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "The answer contradicts the document stating Everest is in the Himalayas."
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+{
+  "meta_instruction": "You MUST strictly follow the analysis_approach and output_structure_mandate. Produce ONLY the required JSON object with no commentary outside the JSON.",
+
+  "metric_name": "QA Relevance",
+
+  "role": "You are a **QA Relevance Evaluator**. Your task is to determine whether the system’s answer is relevant to the user’s question AND grounded in the provided documents. You must judge factual support and contextual alignment only.",
+
+  "goal": "Determine whether the assistant’s answer is both relevant to the question and supported by the provided context documents. Output 'True' if both conditions are met; otherwise output 'False'.",
+
+  "inputs": {
+    "question": "{question}",
+    "documents": "{documents}",
+    "answer": "{answer}"
+  },
+
+  "rubric": {
+    "True": "The answer directly addresses the user's question AND all factual claims are supported by (or inferable from) the documents.",
+    "False": "The answer does NOT address the question, or it introduces unsupported/hallucinated information, or it contradicts the documents."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Identify the core intent of the user's question.",
+    "STEP 2: Break the answer into factual and semantic components.",
+    "STEP 3: Determine whether the answer directly addresses the question.",
+    "STEP 4: Compare claims in the answer to the documents and check for grounding.",
+    "STEP 5: If all claims are supported AND the answer stays on-topic, verdict = True; otherwise False.",
+    "STEP 6: Produce the JSON according to output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "verdict": {
+        "type": "string",
+        "description": "Must be either 'True' or 'False'."
+      },
+      "reason": {
+        "type": "string",
+        "description": "Short explanation stating whether and why the answer is or is not relevant and grounded."
+      }
+    },
+    "required": ["verdict", "reason"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "question": "What year was Tesla founded?",
+        "documents": [
+          "Tesla was founded in 2003 by Martin Eberhard and Marc Tarpenning."
+        ],
+        "answer": "Tesla was founded in 2003."
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "The answer is relevant to the question and correctly grounded in the document."
+      }
+    },
+    {
+      "input": {
+        "question": "What is the capital of France?",
+        "documents": [
+          "Paris is the capital of France and is known for the Eiffel Tower."
+        ],
+        "answer": "The Eiffel Tower is located in France."
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "The answer does not directly address the question asking for the capital."
+      }
+    },
+    {
+      "input": {
+        "question": "Where is the Amazon rainforest located?",
+        "documents": [
+          "The Amazon rainforest spans nine countries in South America."
+        ],
+        "answer": "The Amazon rainforest is located in South America and spans multiple countries."
+      },
+      "output": {
+        "verdict": "True",
+        "reason": "The answer directly addresses the question and is supported by the document."
+      }
+    },
+    {
+      "input": {
+        "question": "What are the uses of Python?",
+        "documents": [
+          "Python is widely used in automation and data science."
+        ],
+        "answer": "Python is primarily used for web development and game design."
+      },
+      "output": {
+        "verdict": "False",
+        "reason": "The answer contains unsupported claims not grounded in the document."
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+{
+  "meta_instruction": "Your response must strictly follow the analysis_approach and output_structure_mandate. Output ONLY the required JSON object.",
+
+  "metric_name": "Confidence Score Accuracy Check",
+
+  "role": "You are a **Confidence Calibration Evaluator**. Your task is to determine whether the agent’s confidence score is appropriate based on the correctness of the agent’s decision AND the strength of the input evidence. You MUST infer decision correctness from the provided inputs.",
+
+  "goal": "Evaluate whether {agent_confidence_score} is justified based on the clarity of instructions, rules, the agent input, and the logical correctness of the agent_output.",
+
+  "inputs": {
+    "developer_instruction": "{developer_instruction}", prompt - no need right now   give the input to gpt and check
+    "rules_and_regulations": "{rules_and_regulations}", context
+    "agent_input": "{agent_input}",state
+    "agent_output": "{agent_output}",
+    "agent_confidence_score": "{agent_confidence_score}"
+  },
+
+  "rubric": {
+    "Accurate": "Confidence score appropriately reflects the clarity of the inputs AND the correctness of the agent_output.",
+    "Overconfident": "Confidence score is too high relative to ambiguity, missing information, or an incorrect decision inferred from the agent_output.",
+    "Underconfident": "Confidence is too low despite clear instructions, strong evidence, and a correct decision inferred from the agent_output."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Analyze developer_instruction and rules_and_regulations to determine expected certainty requirements.",
+    "STEP 2: Examine agent_input to determine clarity or ambiguity.",
+    "STEP 3: Evaluate agent_output to determine whether the decision or action taken appears correct based on the rules and instructions.",
+    "STEP 4: Infer whether the agent made a correct or incorrect decision.",
+    "STEP 5: Determine the expected confidence range based on evidence strength and inferred correctness.",
+    "STEP 6: Compare expected confidence to agent_confidence_score.",
+    "STEP 7: Classify the confidence as Accurate, Overconfident, or Underconfident.",
+    "STEP 8: Output ONLY the JSON required by the output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "confidence_status": {
+        "type": "string",
+        "description": "Accurate, Overconfident, or Underconfident."
+      },
+      "reasoning": {
+        "type": "string",
+        "description": "Concise explanation referencing correctness of the decision and the clarity of input evidence."
+      }
+    },
+    "required": ["confidence_status", "reasoning"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "developer_instruction": "Use vendor ETA as primary selection rule.",
+        "rules_and_regulations": "Never infer missing data.",
+        "agent_input": "Choose best vendor.",
+        "agent_output": "Selected UPS because it has the lowest ETA and all fields are complete.",
+        "agent_confidence_score": 0.92
+      },
+      "output": {
+        "confidence_status": "Accurate",
+        "reasoning": "The decision inferred from the output is correct and inputs are clear, so a high confidence score is justified."
+      }
+    },
+    {
+      "input": {
+        "developer_instruction": "Avoid selecting vendors when key fields are missing.",
+        "rules_and_regulations": "Missing ETA → choose no vendor.",
+        "agent_input": "Select a vendor.",
+        "agent_output": "Selected DHL even though ETA is missing.",
+        "agent_confidence_score": 0.85
+      },
+      "output": {
+        "confidence_status": "Overconfident",
+        "reasoning": "The decision inferred from the agent output violates rules because ETA is missing; high confidence is unjustified."
+      }
+    },
+    {
+      "input": {
+        "developer_instruction": "Use policy text strictly.",
+        "rules_and_regulations": "Ambiguous policy requires lower confidence.",
+        "agent_input": "Does Policy A apply?",
+        "agent_output": "The policy text is unclear; it may or may not apply.",
+        "agent_confidence_score": 0.28
+      },
+      "output": {
+        "confidence_status": "Accurate",
+        "reasoning": "Output shows the decision is uncertain due to ambiguous rules; the low confidence score is appropriate."
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+
+{
+  "meta_instruction": "Your response must be generated by strictly executing the steps defined in the analysis_approach and conforming exactly to the output_structure_mandate. Output ONLY the structured JSON object.",
+
+  "metric_name": "Decision Accuracy Check",
+
+  "role": "You are a **Decision Validity Evaluator**. Your task is to determine whether the agent’s decision is correct based on all available evidence before the decision was made. You must act as a strict, neutral classifier.",
+
+  "goal": "Determine whether {agent_decision} is logically correct and justified given the combined inputs: developer instructions, rules/conditions, agent input, and intermediate evidence present at decision time.",
+
+  "inputs": {
+    "developer_instruction": "{developer_instruction}", - prompt
+    "rules_and_regulations": "{rules_and_regulations}", - context
+    "agent_input": "{agent_input}",
+    "agent_decision": "{agent_decision}" tool call
+  },
+
+  "rubric": {
+    "Correct": "The decision is fully supported by rules, instructions, and evidence.",
+    "Partially_Correct": "Decision is somewhat supported but overlooks minor evidence or relies on small assumptions.",
+    "Incorrect": "Decision contradicts rules, ignores evidence, or is unsupported by available information."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Identify all relevant decision rules from developer_instruction and rules_and_regulations.",
+    "STEP 2: Extract key facts from agent_input and intermediate_evidence.",
+    "STEP 3: Determine the expected correct decision based on combined evidence.",
+    "STEP 4: Compare the expected decision to the actual agent_decision.",
+    "STEP 5: Classify the decision using the rubric and explain why.",
+    "STEP 6: Output ONLY the JSON required by the output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "decision_status": {
+        "type": "string",
+        "description": "Correct, Partially_Correct, or Incorrect."
+      },
+      "reasoning": {
+        "type": "string",
+        "description": "Concise explanation of why the decision is correct or incorrect based on evidence."
+      }
+    },
+    "required": ["decision_status", "reasoning"]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "developer_instruction": "Initiate review loop when key metrics are missing.",
+        "rules_and_regulations": "Loop only if required data is incomplete.",
+        "agent_input": "Optimize route.",
+        "intermediate_evidence": { "vendor_stats_complete": false },
+        "agent_decision": "Initiate loop"
+      },
+      "output": {
+        "decision_status": "Correct",
+        "reasoning": "Vendor stats were incomplete, and rules state to initiate loop when required data is missing."
+      }
+    },
+    {
+      "input": {
+        "developer_instruction": "Run enrichment loop only if confidence < 0.7.",
+        "rules_and_regulations": "Avoid unnecessary loops.",
+        "agent_input": "Generate ETA forecast.",
+        "intermediate_evidence": { "forecast_confidence": 0.92 },
+        "agent_decision": "Initiate loop"
+      },
+      "output": {
+        "decision_status": "Incorrect",
+        "reasoning": "Confidence is high and rules restrict loop initiation to low-confidence cases; evidence does not justify loop."
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+
+
+{
+  "meta_instruction": "Your response must strictly follow the analysis_approach and output_structure_mandate. Output ONLY the required JSON array.",
+
+  "metric_name": "Function / Tool Call Accuracy Check",
+
+  "role": "You are a **Function Template Substitution Evaluator**. Your job is to determine whether the agent has correctly filled a function/tool template with the appropriate values. You MUST evaluate only template–value correctness, not decision logic or tool selection.",
+
+  "goal": "Compare the expected function template ({function_template}) with the agent's filled function call ({filled_function_call}) and classify each parameter substitution as Correct, Partially_Correct, or Incorrect.",
+
+  "inputs": {
+    "function_template": "{function_template}",
+    "filled_function_call": "{filled_function_call}"
+  },
+
+
+
+  "rubric": {
+    "Correct": "The parameter exists in the template AND the substituted value is correctly mapped without modification, omission, or hallucination.",
+    "Partially_Correct": "The parameter exists but the value is partially wrong, incomplete, or partially misaligned with expected substitution.",
+    "Incorrect": "Parameter names do not match the template, required parameters are missing, extra parameters are added, or substituted values are incorrect."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Parse function_template to extract required parameter names.",
+    "STEP 2: Parse filled_function_call to extract provided parameter names and values.",
+    "STEP 3: For each template parameter:",
+    "   - Check if it exists in the filled call.",
+    "   - Check whether the substituted value is correct.",
+    "STEP 4: Identify any extra parameters that do not appear in the template.",
+    "STEP 5: Assign Correct, Partially_Correct, or Incorrect for each parameter.",
+    "STEP 6: Output ONLY the JSON array following output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "parameter": { "type": "string" },
+        "expected": { "type": "string" },
+        "actual": { "type": "string" },
+        "accuracy_status": { "type": "string" },
+        "reasoning": { "type": "string" }
+      },
+      "required": ["parameter", "expected", "actual", "accuracy_status", "reasoning"]
+    }
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "function_template": "get_route_history(origin, destination, sku, days)",
+        "filled_function_call": "get_route_history(origin='Chennai', destination='USA', sku='L14', days=90)"
+      },
+      "output": [
+        {
+          "parameter": "origin",
+          "expected": "origin",
+          "actual": "origin",
+          "accuracy_status": "Correct",
+          "reasoning": "Parameter name matches template and substituted value is valid."
+        },
+        {
+          "parameter": "destination",
+          "expected": "destination",
+          "actual": "destination",
+          "accuracy_status": "Correct",
+          "reasoning": "Correct mapping."
+        },
+        {
+          "parameter": "sku",
+          "expected": "sku",
+          "actual": "sku",
+          "accuracy_status": "Correct",
+          "reasoning": "Correct substitution."
+        },
+        {
+          "parameter": "days",
+          "expected": "days",
+          "actual": "days",
+          "accuracy_status": "Correct",
+          "reasoning": "Value mapped correctly."
+        }
+      ]
+    },
+
+    {
+      "input": {
+        "function_template": "predict_eta_after_load_change(vendor, volume_pct)",
+        "filled_function_call": "predict_eta_after_load_change(vendors='UPS', pct=20)"
+      },
+      "output": [
+        {
+          "parameter": "vendor",
+          "expected": "vendor",
+          "actual": "vendors",
+          "accuracy_status": "Incorrect",
+          "reasoning": "Parameter name does not match template."
+        },
+        {
+          "parameter": "volume_pct",
+          "expected": "volume_pct",
+          "actual": "pct",
+          "accuracy_status": "Incorrect",
+          "reasoning": "Template parameter missing, substituted field incorrect."
+        }
+      ]
+    }
+  ]
+}
+
+
+
+
+
+{
+  "meta_instruction": "Your output must strictly follow analysis_approach and output_structure_mandate. Output ONLY the required JSON array.",
+
+  "metric_name": "Hallucinated Tool / Argument Detection",
+
+  "role": "You are a **Tool Hallucination Detector**. Your task is to identify whether the tool or any of its arguments used by the agent exist in the approved tool list. You MUST detect hallucinated tool names, hallucinated arguments, unexpected parameters, and missing required fields.",
+
+  "goal": "Compare the provided tool_call with the approved tool_list and classify each part as Valid or Hallucinated.",
+
+  "inputs": {
+    "tool_list": "{tool_list}",
+    "tool_call": "{tool_call}"
+  },
+
+  "rubric": {
+    "Valid": "Tool or argument exists in the tool_list and is allowed.",
+    "Hallucinated": "Tool or argument does NOT exist in the tool_list or is not defined for that tool."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Extract the tool name and argument names/values from tool_call.",
+    "STEP 2: Compare the tool name against tool_list.",
+    "STEP 3: If tool name does not exist → classify entire tool_call as hallucinated.",
+    "STEP 4: If tool exists, compare argument names against allowed parameters for that tool.",
+    "STEP 5: Detect:",
+    "   - Missing required arguments",
+    "   - Extra / undefined arguments",
+    "   - Incorrect argument names",
+    "STEP 6: Produce an entry for each argument using rubric.",
+    "STEP 7: Output ONLY the JSON array following output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "item": { "type": "string", "description": "Tool name or argument name" },
+        "status": { "type": "string", "description": "Valid or Hallucinated" },
+        "reasoning": { "type": "string", "description": "Short justification based on tool_list comparison" }
+      },
+      "required": ["item", "status", "reasoning"]
+    }
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "tool_list": {
+          "get_route_history": ["origin", "destination", "sku", "days"],
+          "predict_eta": ["origin", "destination", "volume"]
+        },
+        "tool_call": "magic_eta_predictor(origin='Chennai', days=10)"
+      },
+      "output": [
+        {
+          "item": "magic_eta_predictor",
+          "status": "Hallucinated",
+          "reasoning": "Tool does not exist in tool_list."
+        }
+      ]
+    },
+
+    {
+      "input": {
+        "tool_list": {
+          "predict_eta": ["origin", "destination", "volume"]
+        },
+        "tool_call": "predict_eta(origin='Chennai', pct=20)"
+      },
+      "output": [
+        {
+          "item": "predict_eta",
+          "status": "Valid",
+          "reasoning": "Tool exists in tool_list."
+        },
+        {
+          "item": "pct",
+          "status": "Hallucinated",
+          "reasoning": "Argument 'pct' is not part of the allowed argument list."
+        },
+        {
+          "item": "volume",
+          "status": "Hallucinated",
+          "reasoning": "Required argument 'volume' is missing."
+        }
+      ]
+    }
+  ]
+}
+
+
+
+
+
+
+{
+  "meta_instruction": "Your response must strictly follow analysis_approach and output_structure_mandate. Output ONLY the required JSON object.",
+
+  "metric_name": "Hallucination CoVe",
+
+  "role": "You are a Hallucination CoVe Evaluator. Your task is to generate a verification question from the expected answer and evaluate whether the actual answer is consistent, contradictory, or hallucinatory relative to that question. You must act as a strict factual auditor.",
+
+  "goal": "Determine whether {actual_answer} faithfully aligns with the factual content of {expected_answer} by generating a verification question from the expected answer and checking whether the actual answer satisfies it without contradiction or drift.",
+
+  "inputs": {
+    "expected_answer": "{expected_answer}",
+    "actual_answer": "{actual_answer}"
+  },
+
+  "rubric": {
+    "Supported": "The actual answer correctly addresses the verification question using information consistent with the expected answer.",
+    "Contradicted": "The actual answer contains information that clearly conflicts with the expected answer.",
+    "Factual_Drift": "The actual answer alters factual details (names, numbers, origins, outcomes) compared to the expected answer.",
+    "Informational_Drift": "The actual answer introduces new major information not present in the expected answer OR fails to address the generated question.",
+    "Missing": "The actual answer does not provide enough information to answer the verification question."
+  },
+
+  "analysis_approach": [
+    "STEP 1: Read the expected_answer.",
+    "STEP 2: Extract the most central factual statement from the expected_answer.",
+    "STEP 3: Generate ONE verification question that directly tests this factual statement. The question must:",
+    "   - be fully answerable using only the expected_answer,",
+    "   - avoid adding new assumptions,",
+    "   - target a core fact the actual_answer should also contain.",
+    "STEP 4: Answer the generated question using expected_answer. Call this expected_answer_response.",
+    "STEP 5: Attempt to answer the SAME question using actual_answer. Call this actual_answer_response.",
+    "STEP 6: Compare expected_answer_response and actual_answer_response:",
+    "   - If identical or semantically aligned → Supported",
+    "   - If directly conflicting → Contradicted",
+    "   - If actual changes factual elements → Factual_Drift",
+    "   - If actual introduces new unrelated facts OR does not answer the question → Informational_Drift",
+    "   - If actual lacks enough info → Missing",
+    "STEP 7: Produce the final JSON object following output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "generated_question": { "type": "string" },
+      "expected_answer_response": { "type": "string" },
+      "actual_answer_response": { "type": "string" },
+      "status": {
+        "type": "string",
+        "description": "One of: Supported, Contradicted, Factual_Drift, Informational_Drift, Missing"
+      },
+      "reasoning": { "type": "string" }
+    },
+    "required": [
+      "generated_question",
+      "expected_answer_response",
+      "actual_answer_response",
+      "status",
+      "reasoning"
+    ]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "expected_answer": "The shipment originated in Chennai and arrived in 5 days.",
+        "actual_answer": "The shipment came from Delhi and took 3 days."
+      },
+      "output": {
+        "generated_question": "Where did the shipment originate?",
+        "expected_answer_response": "It originated in Chennai.",
+        "actual_answer_response": "It originated in Delhi.",
+        "status": "Contradicted",
+        "reasoning": "The actual answer provides a conflicting origin location."
+      }
+    },
+    {
+      "input": {
+        "expected_answer": "UPS usually delivers this route in 4 days.",
+        "actual_answer": "UPS takes around 4 days."
+      },
+      "output": {
+        "generated_question": "How long does UPS usually take for this route?",
+        "expected_answer_response": "4 days.",
+        "actual_answer_response": "Around 4 days.",
+        "status": "Supported",
+        "reasoning": "The actual answer aligns with the expected factual detail."
+      }
+    },
+    {
+      "input": {
+        "expected_answer": "The delay was caused by customs inspection.",
+        "actual_answer": "The delay was due to a warehouse fire."
+      },
+      "output": {
+        "generated_question": "What caused the delay?",
+        "expected_answer_response": "Customs inspection.",
+        "actual_answer_response": "A warehouse fire.",
+        "status": "Factual_Drift",
+        "reasoning": "Actual answer changes the factual cause of delay."
+      }
+    },
+    {
+      "input": {
+        "expected_answer": "The cargo arrived on time and without issues.",
+        "actual_answer": "The shipment contained 900 units of ThinkPads."
+      },
+      "output": {
+        "generated_question": "Were there any issues with the cargo arrival?",
+        "expected_answer_response": "There were no issues.",
+        "actual_answer_response": "The answer does not address arrival conditions.",
+        "status": "Informational_Drift",
+        "reasoning": "Actual answer ignores the question and introduces unrelated inventory details."
+      }
+    }
+  ]
+}
+
+
+
+
+
+{
+  "meta_instruction": "Your response must follow the analysis_approach and output_structure_mandate exactly. Output ONLY the required JSON object.",
+
+  "metric_name": "Path Convergence Evaluation",
+
+  "role": "You are an Expert Path Convergence Evaluator. Your task is to compare the expected agent reasoning path with the actual executed path and determine how closely the agent's trajectory aligns with the intended design. You must identify drift, deviations, unnecessary steps, missing steps, logical breaks, or incorrect tool usage.",
+
+  "goal": "Compute a convergence score between {expected_path} and {actual_path}, along with concise reasoning explaining the alignment or divergence.",
+
+  "inputs": {
+    "expected_path": "{expected_path}",
+    "actual_path": "{actual_path}"
+  },
+
+  "rubric": {
+    "Step_Alignment": {
+      "description": "How closely the steps in the actual path match the expected sequence (order, structure, purpose).",
+      "scoring": {
+        "1.0": "All steps follow expected ordering and intent.",
+        "0.5": "Some deviations, reordering, or partial skips.",
+        "0.0": "Major divergence; expected sequence not followed."
+      }
+    },
+    "Logical_Continuity": {
+      "description": "Whether the reasoning flow is coherent and causally connected even if step order differs.",
+      "scoring": {
+        "1.0": "Strong logical flow; no causal breaks.",
+        "0.5": "Partially coherent with mild reasoning drift.",
+        "0.0": "Reasoning is inconsistent or broken."
+      }
+    },
+    "Tool_Consistency": {
+      "description": "Whether tool/function calls match the expected types and intended purpose.",
+      "scoring": {
+        "1.0": "Uses expected or equivalent tools with aligned parameters.",
+        "0.5": "Minor mismatch such as additional or reordered calls.",
+        "0.0": "Wrong, unnecessary, or hallucinated tools."
+      }
+    },
+    "Outcome_Alignment": {
+      "description": "Whether the final output or decision aligns with the expected outcome.",
+      "scoring": {
+        "1.0": "Final result fully matches intended outcome.",
+        "0.5": "Partially matches or is incomplete.",
+        "0.0": "Incorrect or unrelated final result."
+      }
+    }
+  },
+
+  "analysis_approach": [
+    "STEP 1: Parse expected_path into atomic steps.",
+    "STEP 2: Parse actual_path into atomic steps.",
+    "STEP 3: Compare ordering, presence, and structural alignment of steps to compute Step_Alignment.",
+    "STEP 4: Evaluate whether the reasoning transitions follow coherent causal logic for Logical_Continuity.",
+    "STEP 5: Compare tool/function calls in actual_path to those in expected_path for Tool_Consistency.",
+    "STEP 6: Compare final outputs in both paths to determine Outcome_Alignment.",
+    "STEP 7: Calculate final convergence score using: (0.35 * Step_Alignment) + (0.25 * Logical_Continuity) + (0.20 * Tool_Consistency) + (0.20 * Outcome_Alignment).",
+    "STEP 8: Produce a JSON object following output_structure_mandate."
+  ],
+
+  "output_structure_mandate": {
+    "type": "object",
+    "properties": {
+      "Step_Alignment": { "type": "number" },
+      "Logical_Continuity": { "type": "number" },
+      "Tool_Consistency": { "type": "number" },
+      "Outcome_Alignment": { "type": "number" },
+      "Convergence_Score": { "type": "number" },
+      "critique": { "type": "string", "description": "3–6 line analysis describing deviations, unnecessary steps, tool mismatches, or drift." }
+    },
+    "required": [
+      "Step_Alignment",
+      "Logical_Continuity",
+      "Tool_Consistency",
+      "Outcome_Alignment",
+      "Convergence_Score",
+      "critique"
+    ]
+  },
+
+  "few_shot_examples": [
+    {
+      "input": {
+        "expected_path": [
+          "Extract parameters",
+          "Fetch route history",
+          "Fetch vendor stats",
+          "Predict ETA",
+          "Generate optimization plan",
+          "Run critique",
+          "Return summary"
+        ],
+        "actual_path": [
+          "Extract parameters",
+          "Fetch route history",
+          "Predict ETA",
+          "Generate optimization plan",
+          "Run critique",
+          "Return summary"
+        ]
+      },
+      "output": {
+        "Step_Alignment": 0.8,
+        "Logical_Continuity": 1.0,
+        "Tool_Consistency": 1.0,
+        "Outcome_Alignment": 1.0,
+        "Convergence_Score": 0.91,
+        "critique": "The agent skipped the vendor stats step but preserved logical continuity and produced a valid final outcome. Tool usage and reasoning remained aligned with expectations. Minor step omission slightly reduced alignment."
+      }
+    },
+    {
+      "input": {
+        "expected_path": [
+          "Extract parameters",
+          "Run compliance check",
+          "Generate recommendations"
+        ],
+        "actual_path": [
+          "Extract parameters",
+          "Query weather API",
+          "Generate recommendations"
+        ]
+      },
+      "output": {
+        "Step_Alignment": 0.3,
+        "Logical_Continuity": 0.5,
+        "Tool_Consistency": 0.0,
+        "Outcome_Alignment": 0.5,
+        "Convergence_Score": 0.36,
+        "critique": "The agent invoked an unrelated weather tool instead of performing the required compliance check. Logical flow only partially resembles the expected reasoning structure. Although the final output is loosely related, the path shows significant divergence."
+      }
+    }
+  ]
+}
+
