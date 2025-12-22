@@ -1,35 +1,6 @@
-Metric: Supervisor Agent Plan Accuracy
-Matching Existing Metric: Plan Quality
 
 
 
-Metric: Reason Accuracy Check
-Matching Existing Metric: Argument Correctness
-
-
-Step Efficiency - there in list
-
-
-Metric: Summary Accuracy
-Matching Existing Metric: Context Adherence
-
-
-Metric: QA Relevance
-Matching Existing Metric: Context Adherence
-
-
-Metric: Agent Goal Accomplishment
-Matching Existing Metric: Task Completion
-
-
-
-
-Metric: Trajectory
-Matching Existing Metrics:
-
-✔ Trajectory LLM Rubric
-
-✔ Trajectory Match Code
 
 
 
@@ -2440,4 +2411,5 @@ Tracebacks
     }
   ]
 }
+
 
